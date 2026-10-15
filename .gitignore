@@ -1,0 +1,13 @@
+.gradle/
+build/
+run/
+*.iml
+.idea/
+tools/preview.png
+shots/
+run-client.log
+tools/corvo_preview.png
+devmods/
+release/
+installer/launcher/target/
+github/

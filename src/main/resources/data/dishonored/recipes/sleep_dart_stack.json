@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "A",
+    "B"
+  ],
+  "key": {
+    "A": {
+      "item": "dishonored:crossbow_bolt"
+    },
+    "B": {
+      "item": "minecraft:spider_eye"
+    }
+  },
+  "result": {
+    "item": "dishonored:sleep_dart",
+    "count": 1
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.dishonoredmc.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": ["ServerWorldMixin", "MobEntityMixin", "LivingEntityMixin", "LivingEntityAccessor", "TargetPredicateMixin", "PlayerEntityMixin", "MinecraftServerMixin", "MinecraftServerAccessor", "PlayerScreenHandlerMixin", "LivingEntityBlockMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

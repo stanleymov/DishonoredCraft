@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.dishonoredmc.client.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "MinecraftClientMixin", "EntityMixin", "ClientWorldMixin", "ItemRendererMixin",
+    "HeldItemRendererAccessor", "HeldItemRendererMixin", "CameraMixin", "KeyboardInputMixin", "ElixirItemRendererMixin", "RenderTickCounterMixin", "WorldRendererMixin", "GameRendererMixin", "InGameHudMixin", "KeyBindingAccessor", "InventoryScreenMixin"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}

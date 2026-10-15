@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "D",
+    "F",
+    "B"
+  ],
+  "key": {
+    "D": {
+      "item": "minecraft:red_dye"
+    },
+    "F": [
+      {
+        "item": "minecraft:beef"
+      },
+      {
+        "item": "minecraft:cooked_beef"
+      }
+    ],
+    "B": {
+      "item": "minecraft:glass_bottle"
+    }
+  },
+  "result": {
+    "item": "dishonored:sokolovs_elixir",
+    "count": 1
+  }
+}

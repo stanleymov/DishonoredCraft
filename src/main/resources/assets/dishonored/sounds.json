@@ -1,0 +1,281 @@
+{
+  "power.blink": {
+    "subtitle": "subtitles.dishonored.power.blink",
+    "sounds": [
+      {
+        "name": "minecraft:entity.enderman.teleport",
+        "type": "event"
+      }
+    ]
+  },
+  "power.blink_arrive": {
+    "subtitle": "subtitles.dishonored.power.blink_arrive",
+    "sounds": [
+      {
+        "name": "minecraft:entity.enderman.teleport",
+        "type": "event"
+      }
+    ]
+  },
+  "power.dark_vision_on": {
+    "subtitle": "subtitles.dishonored.power.dark_vision_on",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "power.dark_vision_off": {
+    "subtitle": "subtitles.dishonored.power.dark_vision_off",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.deactivate",
+        "type": "event"
+      }
+    ]
+  },
+  "power.bend_time": {
+    "subtitle": "subtitles.dishonored.power.bend_time",
+    "sounds": [
+      {
+        "name": "minecraft:block.respawn_anchor.deplete",
+        "type": "event"
+      }
+    ]
+  },
+  "power.bend_time_end": {
+    "subtitle": "subtitles.dishonored.power.bend_time_end",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.deactivate",
+        "type": "event"
+      }
+    ]
+  },
+  "power.possession_in": {
+    "subtitle": "subtitles.dishonored.power.possession_in",
+    "sounds": [
+      {
+        "name": "minecraft:entity.evoker.prepare_attack",
+        "type": "event"
+      }
+    ]
+  },
+  "power.possession_out": {
+    "subtitle": "subtitles.dishonored.power.possession_out",
+    "sounds": [
+      {
+        "name": "minecraft:entity.illusioner.cast_spell",
+        "type": "event"
+      }
+    ]
+  },
+  "power.swarm": {
+    "subtitle": "subtitles.dishonored.power.swarm",
+    "sounds": [
+      {
+        "name": "minecraft:entity.evoker.cast_spell",
+        "type": "event"
+      }
+    ]
+  },
+  "power.swarm_rats": {
+    "subtitle": "subtitles.dishonored.power.swarm_rats",
+    "sounds": [
+      {
+        "name": "minecraft:entity.silverfish.ambient",
+        "type": "event"
+      }
+    ]
+  },
+  "power.windblast": {
+    "subtitle": "subtitles.dishonored.power.windblast",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.wind_burst",
+        "type": "event"
+      }
+    ]
+  },
+  "power.shadow_kill": {
+    "subtitle": "subtitles.dishonored.power.shadow_kill",
+    "sounds": [
+      {
+        "name": "minecraft:entity.blaze.death",
+        "type": "event"
+      }
+    ]
+  },
+  "power.switch": {
+    "subtitle": "subtitles.dishonored.power.switch",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event"
+      }
+    ]
+  },
+  "power.empty": {
+    "subtitle": "subtitles.dishonored.power.empty",
+    "sounds": [
+      {
+        "name": "minecraft:block.dispenser.fail",
+        "type": "event"
+      }
+    ]
+  },
+  "power.super_jump": {
+    "subtitle": "subtitles.dishonored.power.super_jump",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.jump",
+        "type": "event"
+      }
+    ]
+  },
+  "player.mantle": {
+    "subtitle": "subtitles.dishonored.player.mantle",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.weak",
+        "type": "event"
+      }
+    ]
+  },
+  "player.slide": {
+    "subtitle": "subtitles.dishonored.player.slide",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.pistol_fire": {
+    "subtitle": "subtitles.dishonored.weapon.pistol_fire",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.pistol_empty": {
+    "subtitle": "subtitles.dishonored.weapon.pistol_empty",
+    "sounds": [
+      {
+        "name": "minecraft:block.dispenser.fail",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.crossbow_fire": {
+    "subtitle": "subtitles.dishonored.weapon.crossbow_fire",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.shoot",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.crossbow_reload": {
+    "subtitle": "subtitles.dishonored.weapon.crossbow_reload",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.loading_end",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.grenade_explode": {
+    "subtitle": "subtitles.dishonored.weapon.grenade_explode",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.grenade_pin": {
+    "subtitle": "subtitles.dishonored.weapon.grenade_pin",
+    "sounds": [
+      {
+        "name": "minecraft:entity.snowball.throw",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.razor_install": {
+    "subtitle": "subtitles.dishonored.weapon.razor_install",
+    "sounds": [
+      {
+        "name": "minecraft:block.tripwire.attach",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.razor_arming": {
+    "subtitle": "subtitles.dishonored.weapon.razor_arming",
+    "sounds": [
+      {
+        "name": "minecraft:block.tripwire.click_on",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.razor_shot": {
+    "subtitle": "subtitles.dishonored.weapon.razor_shot",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.sword_whoosh": {
+    "subtitle": "subtitles.dishonored.weapon.sword_whoosh",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.sword_parry": {
+    "subtitle": "subtitles.dishonored.weapon.sword_parry",
+    "sounds": [
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event"
+      }
+    ]
+  },
+  "weapon.sword_unfold": {
+    "subtitle": "subtitles.dishonored.weapon.sword_unfold",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event"
+      }
+    ]
+  },
+  "item.elixir_mana": {
+    "subtitle": "subtitles.dishonored.item.elixir_mana",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.drink",
+        "type": "event"
+      }
+    ]
+  },
+  "item.elixir_health": {
+    "subtitle": "subtitles.dishonored.item.elixir_health",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.drink",
+        "type": "event"
+      }
+    ]
+  }
+}

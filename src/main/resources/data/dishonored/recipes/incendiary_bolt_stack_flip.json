@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "B",
+    "A"
+  ],
+  "key": {
+    "A": {
+      "item": "dishonored:crossbow_bolt"
+    },
+    "B": [
+      {
+        "item": "minecraft:blaze_powder"
+      },
+      {
+        "tag": "minecraft:coals"
+      }
+    ]
+  },
+  "result": {
+    "item": "dishonored:incendiary_bolt",
+    "count": 1
+  }
+}

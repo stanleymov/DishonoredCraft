@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "B B",
+    " X ",
+    "B  "
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "X": {
+      "item": "minecraft:gunpowder"
+    }
+  },
+  "result": {
+    "item": "dishonored:bone_charm_scavenger",
+    "count": 1
+  }
+}

@@ -1,0 +1,19 @@
+DishonoredCraft - credits
+
+DishonoredCraft is an unofficial fan mod by StanleyMOV, made with the help of Claude (Anthropic's AI). It is not made,
+supported or endorsed by Arkane Studios, Bethesda Softworks, ZeniMax Media or Mojang.
+
+Dishonored (c) ZeniMax Media Inc. / Arkane Studios. None of its files are in this download: the setup builds the
+mod's art, animations and sounds from the copy of Dishonored installed on your own PC. The jar it builds is for you
+only - please don't share it.
+
+Minecraft (c) Mojang Studios / Microsoft. Minecraft Forge (c) the Forge team.
+
+Tools used by the setup (licences in this folder):
+- UE Viewer / umodel by Konstantin Nosov - MIT
+- vgmstream by the vgmstream authors - ISC-style (see vgmstream-COPYING.txt); its codec DLLs (FFmpeg libraries,
+  libvorbis, etc.) under their own licences listed there
+- wwiser by bnnm - downloaded by the setup from its GitHub releases (not included)
+- FFmpeg (gyan.dev build) - GPL v3, unmodified, portable
+- Python 3.12 (PSF licence) with numpy, scipy (BSD), Pillow (HPND), pefile (MIT) and Unicorn (GPL-2.0)
+- Eclipse Temurin Java (downloaded only if your PC has no Java, to run Forge's own installer)
