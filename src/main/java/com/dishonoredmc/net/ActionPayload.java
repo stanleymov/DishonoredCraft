@@ -23,6 +23,8 @@ public record ActionPayload(int action, String item, int arg) {
 	public static final int CYCLE_BOLT = 7;
 	/** Block with the blade while a gun or gadget is in hand: started (arg 1) or stopped (arg 0). */
 	public static final int BLADE_BLOCK = 8;
+	/** The block / choke button pressed on the mob whose entity id is `arg`: choke it if it can be choked. */
+	public static final int CHOKE = 9;
 
 	public void write(PacketByteBuf buf) {
 		buf.writeVarInt(action());

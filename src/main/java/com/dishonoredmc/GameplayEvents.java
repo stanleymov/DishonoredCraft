@@ -53,15 +53,6 @@ final class GameplayEvents {
 			if (e.getEntity() instanceof ServerPlayerEntity sp && Takedowns.tryAssassinate(sp, e.getTarget())) e.setCanceled(true);
 		});
 
-		// Sneak + use on an unaware mob from behind: choke it unconscious.
-		MinecraftForge.EVENT_BUS.addListener((PlayerInteractEvent.EntityInteract e) -> {
-			if (e.getHand() != Hand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayerEntity sp)) return;
-			if (Takedowns.tryChoke(sp, e.getTarget())) {
-				e.setCanceled(true);
-				e.setCancellationResult(ActionResult.SUCCESS);
-			}
-		});
-
 		// Scavenger bone charm: ammo pickups have a 50% chance to be doubled.
 		MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.EntityItemPickupEvent e) -> {
 			var itemEntity = e.getItem();
@@ -187,6 +178,11 @@ final class GameplayEvents {
 				if (stack.isOf(ModItems.WRIST_BOW)) WristBowItem.cycle(player, stack);
 			}
 			case ActionPayload.BLADE_BLOCK -> com.dishonoredmc.BladeBlock.set(player, payload.arg() == 1);
+			// Only the block / choke button chokes (never right click): the client sends it with the mob's id.
+			case ActionPayload.CHOKE -> {
+				var target = player.getServerWorld().getEntityById(payload.arg());
+				if (target != null && player.distanceTo(target) < 4.0F) Takedowns.tryChoke(player, target);
+			}
 			case ActionPayload.REDIRECTIVE -> com.dishonoredmc.power.RedirectiveBlink.set(player, payload.arg() == 1);
 			default -> {}
 		}

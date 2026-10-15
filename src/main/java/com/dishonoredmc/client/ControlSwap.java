@@ -23,6 +23,8 @@ public final class ControlSwap {
 	private static boolean rightUsed;
 	/** Blocking with the blade while a gun or gadget is in hand (BladeBlock on the server). */
 	private static boolean toolBlocking;
+	/** This block / choke press started a choke: it doesn't also raise the guard until it is released. */
+	private static boolean chokeHeld;
 
 	private ControlSwap() {}
 
@@ -47,9 +49,16 @@ public final class ControlSwap {
 		KeyBinding use = client.options.useKey, power = DishonoredClient.usePower;
 		var useKey = (KeyBindingAccessor) use;
 		var powerKey = (KeyBindingAccessor) power;
+		// The block / choke button on a mob that can be choked (its prompt shows): choke it, whatever is in hand.
+		boolean backDown = held(client, power);
+		if (!backDown) chokeHeld = false;
+		if (powerKey.dishonored$getTimesPressed() > 0 && p != null && client.currentScreen == null && choke(client, p)) {
+			powerKey.dishonored$setTimesPressed(0);
+			chokeHeld = true;
+		}
 		if (on) {
 			int useClicks = useKey.dishonored$getTimesPressed(), powerClicks = powerKey.dishonored$getTimesPressed();
-			boolean right = held(client, use), back = held(client, power);
+			boolean right = held(client, use), back = backDown && !chokeHeld;
 			if (useClicks > 0 && interact(client, p)) {
 				useClicks = 0;
 				rightUsed = true;
@@ -61,19 +70,14 @@ public final class ControlSwap {
 			powerKey.dishonored$setTimesPressed(useClicks);
 		} else {
 			if (active) use.setPressed(held(client, use));
-			// No powers without the blade: the power button only chokes the mob in the crosshair.
-			int chokes = powerKey.dishonored$getTimesPressed();
+			// No powers without the blade: the power button only blocks (with a tool) or chokes (above).
 			power.setPressed(false);
 			powerKey.dishonored$setTimesPressed(0);
-			if (chokes > 0 && p != null && client.currentScreen == null && client.interactionManager != null
-				&& client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit) {
-				client.interactionManager.interactEntity(p, hit.getEntity(), net.minecraft.util.Hand.MAIN_HAND);
-			}
 		}
 		// A gun or gadget in hand with the blade out: holding the power button raises the blade to block, and the
 		// gun / gadget can't be used meanwhile.
 		boolean block = !on && p != null && client.currentScreen == null && FoldingBladeItem.isLeftHandTool(p.getMainHandStack())
-			&& FoldingBladeItem.bladeOut(p) && held(client, power);
+			&& FoldingBladeItem.bladeOut(p) && backDown && !chokeHeld;
 		if (block != toolBlocking) {
 			toolBlocking = block;
 			com.dishonoredmc.net.Net.toServer(new com.dishonoredmc.net.ActionPayload(com.dishonoredmc.net.ActionPayload.BLADE_BLOCK, "", block ? 1 : 0));
@@ -91,18 +95,18 @@ public final class ControlSwap {
 
 	/**
 	 * Right click with the blade first uses what is under the crosshair, as it would without the swap: a door,
-	 * lever, chest, a villager, or a choke from behind. Only when there's nothing to use does it cast the power.
+	 * lever, chest or a villager. Only when there is nothing to use does it cast the power.
 	 */
 	private static boolean interact(MinecraftClient client, net.minecraft.client.network.ClientPlayerEntity p) {
 		var im = client.interactionManager;
 		if (im == null) return false;
 		var hand = net.minecraft.util.Hand.MAIN_HAND;
 		if (client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit) {
-			// The choke is decided on the server; its prompt says whether it will happen.
-			boolean choke = com.dishonoredmc.client.hud.DishonoredHud.chokeReady(client, p);
+			// Right click never chokes (that is the block / choke button's job): a mob in the crosshair is only
+			// "used" when it is something to talk to or trade with.
 			var r = im.interactEntityAtLocation(p, hit.getEntity(), hit, hand);
 			if (!r.isAccepted()) r = im.interactEntity(p, hit.getEntity(), hand);
-			if (r.isAccepted() || choke) {
+			if (r.isAccepted()) {
 				if (r.shouldSwingHand()) p.swingHand(hand);
 				return true;
 			}
@@ -115,6 +119,15 @@ public final class ControlSwap {
 			}
 		}
 		return false;
+	}
+
+	/** Send a choke for the mob in the crosshair if its choke prompt shows. The server checks it again. */
+	private static boolean choke(MinecraftClient client, net.minecraft.client.network.ClientPlayerEntity p) {
+		if (!(client.crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult hit)) return false;
+		if (!com.dishonoredmc.client.hud.DishonoredHud.chokeReady(client, p)) return false;
+		com.dishonoredmc.net.Net.toServer(new com.dishonoredmc.net.ActionPayload(com.dishonoredmc.net.ActionPayload.CHOKE, "", hit.getEntity().getId()));
+		p.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+		return true;
 	}
 
 	/** Whether the button bound to `key` is physically down right now. */
