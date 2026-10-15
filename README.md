@@ -70,7 +70,7 @@ Mana refills by itself only up to the cost of one Blink. **Piero's Spiritual Rem
 Hold **mouse forward**: powers along the bottom, weapons and ammo over the top with their counts, all in Dishonored's
 own icons. Time slows while it's open. Picking a power also draws the blade.
 
-<img src="docs/images/screenshots/076.jpg" alt="The weapon wheel" width="480">
+![The weapon wheel](docs/images/screenshots/076.jpg)
 
 ### Stealth and takedowns
 
