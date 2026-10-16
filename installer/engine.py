@@ -184,6 +184,21 @@ def curseforge_running():
         return False
 
 
+def close_curseforge(timeout=8.0):
+    """End CurseForge (its main process and the helpers it started). Returns True once it is gone."""
+    import time
+    try:
+        subprocess.run(["taskkill", "/F", "/T", "/IM", "CurseForge.exe"], capture_output=True, creationflags=NO_WINDOW)
+    except OSError:
+        return False
+    end = time.time() + timeout
+    while time.time() < end:
+        if not curseforge_running():
+            return True
+        time.sleep(0.3)
+    return not curseforge_running()
+
+
 def find_profiles():
     """Modding-launcher profiles that run Forge 1.20.1: [{"name", "launcher", "mods": Path, "dir": Path}]."""
     found = []
@@ -261,6 +276,49 @@ def jar_name():
     return f"DishonoredCraft-{setup_version()['version']}.jar"
 
 
+# Written into every jar the setup builds: which version made it and which Dishonored files it holds.
+JAR_INFO = "META-INF/dishonoredcraft_setup.json"
+
+
+def jar_content(jar):
+    """The Dishonored-files version ("content") inside a DishonoredCraft jar the setup built, or None. 1.0 jars carry
+    no info file; their files are content 1."""
+    try:
+        with zipfile.ZipFile(jar) as z:
+            names = set(z.namelist())
+            if "assets/dishonored/fp/anims.json" not in names:
+                return None
+            if JAR_INFO in names:
+                return int(json.loads(z.read(JAR_INFO)).get("content", 0)) or None
+            return 1
+    except (OSError, zipfile.BadZipFile, ValueError):
+        return None
+
+
+def installed_jars():
+    """DishonoredCraft jars already in this PC's modding-launcher profiles that an update can reuse (their Dishonored
+    files match this setup): [{"jar": Path, "version": "1.0", "profile": name, "launcher": name}]."""
+    found = []
+    for p in find_profiles():
+        jar = reusable_jar(p["mods"])
+        if jar:
+            found.append({"jar": jar, "version": jar.stem[len("DishonoredCraft-"):], "profile": p["name"],
+                          "launcher": p["launcher"]})
+    return found
+
+
+def reusable_jar(mods):
+    """A DishonoredCraft jar in `mods` whose Dishonored files are what this setup would build: an update then only
+    needs the new code, not Dishonored."""
+    if not mods or not Path(mods).exists():
+        return None
+    want = setup_version()["content"]
+    for jar in sorted(Path(mods).glob("DishonoredCraft-*.jar"), key=lambda p: p.stat().st_mtime, reverse=True):
+        if jar_content(jar) == want:
+            return jar
+    return None
+
+
 # ------------------------------------------------------------------------------------- install
 
 class Cancelled(Exception):
@@ -274,7 +332,7 @@ class Installer:
     that launcher and `mods` is that profile's."""
 
     def __init__(self, game, mods, new_profile, on_progress, on_log):
-        self.game = Path(game)
+        self.game = Path(game) if game else None
         self.new_profile = new_profile
         self.mods = Path(mods) if mods else new_profile_mods(new_profile)
         self.work = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "DCSetup"
@@ -356,13 +414,31 @@ class Installer:
         self.log(f"DishonoredCraft setup {setup_version()['version']}  {datetime.now():%Y-%m-%d %H:%M}")
         self.log(f"Dishonored: {self.game}")
         self.log(f"Jar goes to: {self.mods}")
-        tools = self.tools()
+        reuse = reusable_jar(self.mods)
+        if reuse is None and not (self.game and check_dishonored(self.game)[0]):
+            raise RuntimeError("Dishonored is needed to install DishonoredCraft here (there is no DishonoredCraft with "
+                               "this version's Dishonored files to update).")
         if self.new_profile:
             self.make_profile()
-        pack = self.extract(tools)
-        jar = self.build_jar(pack)
-        if self.new_profile == "CurseForge":
-            self.profile_icon(pack)
+        if reuse is not None:
+            # Code-only update: the Dishonored files come from the jar that's already there.
+            self.log(f"Updating {reuse.name}: its Dishonored files are kept, Dishonored isn't needed")
+            self.step(0.5, "Updating DishonoredCraft")
+            pack = self.work / "pack"
+            # Only the built Dishonored files: anything the new code jar ships itself (lang, recipes...) comes from it.
+            base = [b for b in PAYLOAD.glob("DishonoredCraft-*.jar") if not b.name.endswith("-sources.jar")]
+            code = set(zipfile.ZipFile(sorted(base)[-1]).namelist()) if base else set()
+            with zipfile.ZipFile(reuse) as z:
+                for info in z.infolist():
+                    if info.filename.startswith("assets/") and not info.is_dir() and info.filename not in code:
+                        z.extract(info, pack)
+            jar = self.build_jar(pack)
+        else:
+            tools = self.tools()
+            pack = self.extract(tools)
+            jar = self.build_jar(pack)
+            if self.new_profile == "CurseForge":
+                self.profile_icon(pack)
         self.step(0.98, "Cleaning up")
         shutil.rmtree(self.work, ignore_errors=True)
         self.step(1.0, "Done")
@@ -440,6 +516,7 @@ class Installer:
                 for info in zin.infolist():
                     if info.filename not in added:
                         zout.writestr(info, zin.read(info.filename))
+            zout.writestr(JAR_INFO, json.dumps(setup_version()))
         # older DishonoredCraft jars in that folder would load twice
         for old in list(self.mods.glob("DishonoredCraft-*.jar")) + list(self.mods.glob("dishonored-mc-forge-*.jar")):
             if old.name != out.name:

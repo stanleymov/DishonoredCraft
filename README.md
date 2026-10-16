@@ -13,7 +13,8 @@ Dishonored's own first-person arms and animations, sounds, HUD, weapon wheel, st
 ## Requirements
 
 - **Dishonored** (the 2012 game) installed through **Steam**. The setup builds the mod's art, animations and sounds
-  from your own copy, so it has to be installed while you install or update DishonoredCraft.
+  from your own copy, so it has to be installed for the first install. Updates that only change the mod's code
+  keep the Dishonored files you already have and don't need it.
 - **Minecraft Java Edition** and a modding launcher: **CurseForge**, **Prism Launcher** or **MultiMC**.
 - Windows 10/11 and about 1 GB of free space while installing.
 
@@ -27,12 +28,13 @@ Dishonored's own first-person arms and animations, sounds, HUD, weapon wheel, st
      wheel and blocking);
    - **Use** one of your own Forge 1.20.1 profiles;
    - **Choose another location**: any mods folder.
-4. It builds `DishonoredCraft-1.0.jar` into that profile (a couple of minutes). Command windows may flash while it
+4. It builds `DishonoredCraft-1.1.jar` into that profile (a couple of minutes). Command windows may flash while it
    runs; that is normal. Press **Open CurseForge** and play the profile.
 
 ![The setup's profile page](docs/images/setup.png)
 
-To update, run the new setup and pick the same profile: it replaces the jar and keeps your worlds and settings.
+To update, run the new setup and pick the same profile: it replaces the jar and keeps your worlds and settings
+(and, when the update doesn't bring new Dishonored files, it doesn't need Dishonored).
 
 ## Gameplay
 
@@ -43,11 +45,12 @@ To update, run the new setup and pick the same profile: it replaces the jar and 
 | **Blink** | Hold to aim, release to teleport (15 blocks). Aim at a wall below a ledge (up to 2 blocks above where you aim) and Blink mantles you onto it: an arrow of particles on the wall shows it. |
 | **Dark Vision** | See creatures through walls (needs 25 mana to switch on, then drains slowly) |
 | **Bend Time** | Freezes everything but you. Cast again to end it early: the unused mana flows back |
-| **Possession** | Ride inside a mob for 20 seconds. Cast again to leave early (unused mana flows back) |
+| **Possession** | Ride inside a mob for 20 seconds; every mob hunting you loses you. Cast again to leave early (unused mana flows back) |
 | **Devouring Swarm** | A swarm of plague rats that hunts hostile mobs |
 | **Windblast** | A cone of wind (10 blocks): 4 damage, strong knockback, deflects projectiles, breaks glass and leaves |
 
-Mana refills by itself only up to the cost of one Blink. **Piero's Spiritual Remedy** fills it.
+Mana refills by itself up to the cost of one Blink, and after a Blink the mana it cost always comes back if you wait
+(one Blink's worth, however many you cast). **Piero's Spiritual Remedy** fills it.
 
 ### Weapons and gadgets
 
@@ -76,7 +79,8 @@ own icons. Time slows while it's open. Picking a power also draws the blade.
 
 - **Detection gauge.** Hostile mobs notice you over time, shown by Dishonored's lightning-bolt marker above their head.
   Crouching, staying out of sight, being above them and moving slowly all help. Endermen spot you the moment you meet
-  their eyes.
+  their eyes. Neutral mobs keep vanilla's rules: zombified piglins only after you hit one, piglins not while
+  you wear gold armor, spiders not in bright light.
 - **Backstab** an unaware mob from behind (left click), **choke** it unconscious (mouse back), or **drop assassinate**
   it by attacking while falling onto it. A mob that has noticed you can only be drop assassinated.
 - Bosses (Ender Dragon, Wither, Warden) can't be taken down.
@@ -86,6 +90,7 @@ own icons. Time slows while it's open. Picking a power also draws the blade.
 ### Movement
 
 - **Mantle:** hold jump while walking into a ledge up to 3 blocks above your feet.
+- **Agility:** no fall damage from drops of up to 7 blocks.
 - **Slide:** tap crouch while sprinting.
 - **Double jump** (Agility), **lean** around corners (Ctrl + A / D, you stay in place), **edge protection** while
   crouched (**B** turns it on / off).

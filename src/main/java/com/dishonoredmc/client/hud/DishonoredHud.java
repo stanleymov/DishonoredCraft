@@ -91,10 +91,12 @@ public final class DishonoredHud {
 		}
 		if (System.currentTimeMillis() < nameUntil) ctx.drawTextWithShadow(font, power.displayName(), ix + isz + 4, iy + 6, 0xFFE9E4D4);
 		ctx.getMatrices().pop();
-		int extraY = 74;
+		// Breath under water: a thin bar just below the corner (it follows the corner's size and padding).
 		if (p.getAir() < p.getMaxAir()) {
+			float s = HudArt.hudScale;
+			int ax = Math.round(HudArt.hudPadLeft + 8 * s), ay = Math.round(HudArt.hudPadTop + 70 * s);
 			ctx.setShaderColor(0.6f, 0.95f, 1f, 0.9f);
-			HudArt.drawClipped(ctx, "bar_grey", 8, extraY, 40, 3, Math.max(0, p.getAir()) / (float) p.getMaxAir());
+			HudArt.drawClipped(ctx, "bar_grey", ax, ay, Math.round(40 * s), Math.max(3, Math.round(3 * s)), Math.max(0, p.getAir()) / (float) p.getMaxAir());
 			ctx.setShaderColor(1f, 1f, 1f, 1f);
 		}
 
@@ -107,6 +109,16 @@ public final class DishonoredHud {
 		if (client.currentScreen instanceof WheelScreen) {
 			elixir(ctx, font, "ring_red", ModItems.SOKOLOVS_ELIXIR, hn, DishonoredClient.quickHealth.getBoundKeyLocalizedText(), w - 30, h - 58);
 			elixir(ctx, font, "ring_blue", ModItems.PIEROS_REMEDY, mn, DishonoredClient.quickMana.getBoundKeyLocalizedText(), w - 30, h - 30);
+		} else if (!held.isEmpty() && held.isStackable() && !com.dishonoredmc.client.fp.FpController.isFpItem(held)
+			&& com.dishonoredmc.power.Possession.clientHostId < 0) {
+			// Bottom right: a block or other stackable item in hand, with how many of it the inventory holds.
+			RenderSystem.enableBlend();
+			RenderSystem.defaultBlendFunc();
+			int bx = w - 30, by = h - 35; // room below for the count badge
+			disc(ctx, bx, by, 22, 0.08f);
+			HudArt.draw(ctx, "ring_grey", bx - 1, by - 1, 24, 23);
+			icon(ctx, held, bx + 3, by + 3, 16);
+			badge(ctx, font, inv.count(held.getItem()), bx - 4, by + 15);
 		}
 
 		boolean possessing = com.dishonoredmc.power.Possession.clientHostId >= 0;
@@ -258,8 +270,8 @@ public final class DishonoredHud {
 	/** What a takedown would do right now, so the icon shows before the blow lands. */
 	@Nullable
 	private static Prompt takedownPrompt(MinecraftClient client, ClientPlayerEntity p) {
-		// Nothing while a takedown plays (until it has faded out).
-		if (com.dishonoredmc.client.fp.FpController.takedownPlaying()) return null;
+		// Nothing while a takedown plays (until it has faded out), or while possessing a creature.
+		if (com.dishonoredmc.client.fp.FpController.takedownPlaying() || com.dishonoredmc.power.Possession.clientHostId >= 0) return null;
 		boolean blade = FoldingBladeItem.bladeOut(p);
 		Text attack = client.options.attackKey.getBoundKeyLocalizedText();
 		if (DishonoredClient.dropArmed || dropReady(p)) return new Prompt("prompt_drop", attack, false);
@@ -283,7 +295,7 @@ public final class DishonoredHud {
 
 	/** Falling with the blade onto a mob: attacking now is a drop assassination. */
 	public static boolean dropReady(ClientPlayerEntity p) {
-		return FoldingBladeItem.bladeOut(p) && !p.isOnGround() && p.getVelocity().y < -0.05
+		return FoldingBladeItem.bladeOut(p) && com.dishonoredmc.power.Possession.clientHostId < 0 && !p.isOnGround() && p.getVelocity().y < -0.05
 			&& p.fallDistance > 0.4f && Takedowns.mobBelow(p) != null;
 	}
 

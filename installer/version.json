@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "content": 1,
   "_content": "bump 'content' when the built Dishonored files change (extractors, bakers, sound / icon lists)"
 }

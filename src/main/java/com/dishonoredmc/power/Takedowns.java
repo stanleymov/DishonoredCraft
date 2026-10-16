@@ -141,7 +141,7 @@ public final class Takedowns {
 	 * Corvo comes down on it (see tick).
 	 */
 	public static void tryDropAssassinate(ServerPlayerEntity player) {
-		if (!FoldingBladeItem.bladeOut(player) || player.isOnGround()) return;
+		if (!FoldingBladeItem.bladeOut(player) || player.isOnGround() || Possession.isPossessing(player)) return;
 		MobEntity target = mobBelow(player);
 		if (target != null) drops.put(player.getUuid(), new Drop(target, player.age + 80));
 	}
@@ -175,7 +175,8 @@ public final class Takedowns {
 
 	/** Called when a player melee-attacks an entity. Returns true when it became a one-hit takedown. */
 	public static boolean tryAssassinate(ServerPlayerEntity player, Entity entity) {
-		if (!FoldingBladeItem.bladeOut(player)) return false;
+		// No takedowns from inside a possessed creature.
+		if (!FoldingBladeItem.bladeOut(player) || Possession.isPossessing(player)) return false;
 		if (!(entity instanceof MobEntity target) || !target.isAlive() || isBoss(target)) return false;
 
 		int event = -1;
@@ -208,6 +209,7 @@ public final class Takedowns {
 	/** Use on an unaware mob from behind: choke it unconscious. One that is already unconscious can't be choked again. */
 	public static boolean tryChoke(ServerPlayerEntity player, Entity entity) {
 		if (chokes.containsKey(player.getUuid())) return true;
+		if (Possession.isPossessing(player)) return false;
 		if (!(entity instanceof MobEntity mob) || !mob.isAlive() || isBoss(mob) || SleepDarts.isAsleep(mob)) return false;
 		if (!isBehind(player, mob) || !unaware(mob, player) || player.distanceTo(mob) > 3.0F) return false;
 		boolean hadNoAi = mob.isAiDisabled();

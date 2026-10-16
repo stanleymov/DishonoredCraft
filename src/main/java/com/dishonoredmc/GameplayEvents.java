@@ -46,11 +46,23 @@ final class GameplayEvents {
 
 		// Drop assassinations and stealth kills from behind with the folding blade.
 		// No attacks with the guard up while a gun or gadget is in hand (BladeBlock); the client stops them too.
+		// No attacks or block breaking from inside a possessed creature.
+		MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, (AttackEntityEvent e) -> {
+			if (com.dishonoredmc.power.Possession.isPossessing(e.getEntity())) e.setCanceled(true);
+		});
+		MinecraftForge.EVENT_BUS.addListener((PlayerInteractEvent.LeftClickBlock e) -> {
+			if (com.dishonoredmc.power.Possession.isPossessing(e.getEntity())) e.setCanceled(true);
+		});
 		MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGH, (AttackEntityEvent e) -> {
 			if (BladeBlock.isBlocking(e.getEntity())) e.setCanceled(true);
 		});
 		MinecraftForge.EVENT_BUS.addListener((AttackEntityEvent e) -> {
 			if (e.getEntity() instanceof ServerPlayerEntity sp && Takedowns.tryAssassinate(sp, e.getTarget())) e.setCanceled(true);
+		});
+
+		// While possessing a mob, Corvo is hidden inside it: no mob can pick him as a target.
+		MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.living.LivingChangeTargetEvent e) -> {
+			if (e.getNewTarget() instanceof PlayerEntity p && com.dishonoredmc.power.Possession.isPossessing(p)) e.setCanceled(true);
 		});
 
 		// Scavenger bone charm: ammo pickups have a 50% chance to be doubled.

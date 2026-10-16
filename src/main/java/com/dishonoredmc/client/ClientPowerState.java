@@ -51,4 +51,9 @@ public final class ClientPowerState {
 		castAnim = 0;
 		aim = prevAim = 0;
 	}
+
+	/** Enough mana to cast `power` now, or a Piero's Remedy the server will drink for it (creative: always). */
+	public static boolean canAfford(net.minecraft.entity.player.PlayerEntity p, com.dishonoredmc.power.Power power) {
+		return p.isCreative() || mana >= power.minMana || p.getInventory().count(com.dishonoredmc.item.ModItems.PIEROS_REMEDY) > 0;
+	}
 }

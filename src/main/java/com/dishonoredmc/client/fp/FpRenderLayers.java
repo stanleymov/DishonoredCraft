@@ -13,6 +13,10 @@ import java.util.function.Function;
  * Render types for Dishonored's meshes, drawn as real TRIANGLES. Vanilla's entity layers are QUADS, which forced
  * each triangle into a degenerate quad; shader mods (Oculus/Iris) derive per-face tangents and texture centres
  * from those quads, and the broken values made every triangle shade separately.
+ *
+ * They don't feed Minecraft's entity outline (glowing, Dark Vision) themselves: that buffer is QUADS, and three
+ * vertices per triangle drifted out of step and joined neighbouring entities with lines. FpRenderer.draw writes
+ * the outline separately, as one quad per triangle.
  */
 final class FpRenderLayers extends RenderLayer {
 	private FpRenderLayers() {
@@ -28,7 +32,7 @@ final class FpRenderLayers extends RenderLayer {
 			.cull(DISABLE_CULLING)
 			.lightmap(ENABLE_LIGHTMAP)
 			.overlay(ENABLE_OVERLAY_COLOR)
-			.build(true)));
+			.build(false)));
 
 	static final Function<Identifier, RenderLayer> TRANSLUCENT = Util.memoize(texture -> RenderLayer.of("dishonored_fp_translucent",
 		VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL, VertexFormat.DrawMode.TRIANGLES, 256, true, true,
@@ -39,5 +43,5 @@ final class FpRenderLayers extends RenderLayer {
 			.cull(DISABLE_CULLING)
 			.lightmap(ENABLE_LIGHTMAP)
 			.overlay(ENABLE_OVERLAY_COLOR)
-			.build(true)));
+			.build(false)));
 }

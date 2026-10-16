@@ -40,10 +40,15 @@ public class GrenadeEntity extends ThrownItemEntity {
 	protected void onCollision(HitResult hit) {
 		super.onCollision(hit);
 		if (!this.getWorld().isClient) {
-			// Damage reach of a strong blast, but only a small crater.
+			// Damage reach of a strong blast, and a crater as big as a TNT block's (stone included).
 			this.getWorld().createExplosion(this, this.getX(), this.getY(), this.getZ(), 2.8F, World.ExplosionSourceType.NONE);
 			this.craterBlast = true;
-			this.getWorld().createExplosion(this, this.getX(), this.getY(), this.getZ(), 1.4F, World.ExplosionSourceType.TNT);
+			// Against a wall or floor the blast goes off just outside the surface it hit, so the crater opens into it.
+			net.minecraft.util.math.Vec3d at = this.getPos();
+			if (hit instanceof net.minecraft.util.hit.BlockHitResult bh) {
+				at = bh.getPos().add(net.minecraft.util.math.Vec3d.of(bh.getSide().getVector()).multiply(0.3));
+			}
+			this.getWorld().createExplosion(this, at.x, at.y, at.z, 4.0F, World.ExplosionSourceType.TNT);
 			this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), ModSounds.GRENADE_EXPLODE, net.minecraft.sound.SoundCategory.PLAYERS, 3.0F, 1.0F);
 			this.discard();
 		}

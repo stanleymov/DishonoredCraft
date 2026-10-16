@@ -50,12 +50,17 @@ public final class Powers {
 		ServerWorld world = player.getServerWorld();
 		switch (power) {
 			case BLINK -> {
+				if (!player.isCreative() && Mana.get(player) < power.minMana && Elixirs.count(player, com.dishonoredmc.item.ElixirItem.Kind.MANA) == 0) {
+					fail(player, "message.dishonored.no_mana");
+					return;
+				}
 				Vec3d target = BlinkTargeting.compute(player);
 				if (target == null) {
 					fail(player, "message.dishonored.no_target");
 					return;
 				}
 				if (!spend(player, power)) return;
+				Mana.blinked(player);
 				blink(player, world, target);
 			}
 			case DARK_VISION -> {
@@ -75,13 +80,22 @@ public final class Powers {
 				// (The Bend Time sound plays on each client and fades out when time resumes: BendTimeSound.)
 			}
 			case POSSESSION -> {
-				Entity target = targetEntity(player, 16.0);
-				if (!(target instanceof MobEntity mob) || !Possession.canPossess(mob)) {
+				MobEntity mob = possessionTarget(player, 16.0);
+				if (mob == null) {
+					com.dishonoredmc.DishonoredMod.LOGGER.info("Possession by {}: no creature in reach (16 blocks, aim cone 6 degrees)", player.getName().getString());
 					fail(player, "message.dishonored.no_host");
 					return;
 				}
 				if (!spend(player, power)) return;
-				Possession.start(player, mob);
+				if (!Possession.start(player, mob)) {
+					// Mana back: nothing happened.
+					Mana.set(player, Mana.get(player) + power.cost);
+					com.dishonoredmc.DishonoredMod.LOGGER.warn("Possession by {} of {} failed: could not ride it (riding: {}, passengers: {}, alive: {})",
+						player.getName().getString(), mob.getType().getUntranslatedName(), player.hasVehicle(), mob.hasPassengers(), mob.isAlive());
+					fail(player, "message.dishonored.no_host");
+					return;
+				}
+				com.dishonoredmc.DishonoredMod.LOGGER.info("Possession by {}: took {}", player.getName().getString(), mob.getType().getUntranslatedName());
 			}
 			case DEVOURING_SWARM -> {
 				if (!spend(player, power)) return;
@@ -183,6 +197,30 @@ public final class Powers {
 			world.spawnParticles(ParticleTypes.CLOUD, p.x, p.y, p.z, 1, 0.2 * i, 0.2 * i, 0.2 * i, 0);
 		}
 		world.playSound(null, player.getBlockPos(), ModSounds.WINDBLAST, SoundCategory.PLAYERS, 1.4F, 1.0F);
+	}
+
+	/**
+	 * The creature to possess: the one under the crosshair, or else the possessable one closest to the crosshair
+	 * within a narrow cone (6 degrees) that the player can see. Their own rats count too.
+	 */
+	@org.jetbrains.annotations.Nullable
+	private static MobEntity possessionTarget(ServerPlayerEntity player, double range) {
+		if (targetEntity(player, range) instanceof MobEntity direct && Possession.canPossess(direct)) return direct;
+		Vec3d eye = player.getEyePos(), look = player.getRotationVec(1.0F);
+		double cos = Math.cos(Math.toRadians(6));
+		MobEntity best = null;
+		double bestDot = cos;
+		for (MobEntity m : player.getWorld().getEntitiesByClass(MobEntity.class, player.getBoundingBox().expand(range), Possession::canPossess)) {
+			Vec3d to = m.getBoundingBox().getCenter().subtract(eye);
+			double d = to.length();
+			if (d > range || d < 0.5) continue;
+			double dot = to.multiply(1 / d).dotProduct(look);
+			if (dot > bestDot && player.canSee(m)) {
+				bestDot = dot;
+				best = m;
+			}
+		}
+		return best;
 	}
 
 	@Nullable

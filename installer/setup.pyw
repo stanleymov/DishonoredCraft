@@ -1,6 +1,7 @@
 """DishonoredCraft setup wizard (tkinter). The work itself: engine.py."""
 import os
 import sys
+import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -141,21 +142,39 @@ class Wizard(tk.Tk):
     def page_game(self):
         ttk.Label(self.body, text="Dishonored", style="Title.TLabel").pack(anchor="w", pady=(0, 12))
         ok, msg = engine.check_dishonored(self.game)
+        installed = engine.installed_jars()
+        self.game_ok = ok
+        # Dishonored itself (green when found). Not found is only a problem without a DishonoredCraft to update.
         box = ttk.Frame(self.body, style="Panel.TFrame", padding=14)
         box.pack(fill="x", pady=(0, 10))
         head = ttk.Frame(box, style="Panel.TFrame")
         head.pack(fill="x")
-        ttk.Label(head, text=("✔ " if ok else "✖ ") + "Dishonored", style="Panel.TLabel", font=("Segoe UI", 12, "bold"),
-                  foreground=GREEN if ok else RED).pack(side="left")
+        # Green when found; red with an X when it's needed (no DishonoredCraft to update); plain when updating.
+        mark, colour = ("✔ ", GREEN) if ok else ("", FG) if installed else ("✖ ", RED)
+        ttk.Label(head, text=mark + "Dishonored", style="Panel.TLabel", font=("Segoe UI", 12, "bold"),
+                  foreground=colour).pack(side="left")
         ttk.Button(head, text="Browse...", command=self.browse_game).pack(side="right")
+        if not ok and installed:
+            msg = ("Not found - that's fine for updating: Dishonored is only needed for a first install, or when an "
+                   "update brings new Dishonored files.")
         ttk.Label(box, text=msg, style="Panel.TLabel", wraplength=660, justify="left",
-                  foreground=FG if ok else WARN).pack(anchor="w", pady=(6, 0))
+                  foreground=FG if ok or installed else WARN).pack(anchor="w", pady=(6, 0))
+        # DishonoredCraft already installed somewhere (blue): the update keeps its Dishonored files.
+        if installed:
+            box2 = ttk.Frame(self.body, style="Panel.TFrame", padding=14)
+            box2.pack(fill="x", pady=(0, 10))
+            ttk.Label(box2, text="✔ DishonoredCraft", style="Panel.TLabel", font=("Segoe UI", 12, "bold"),
+                      foreground=ACCENT).pack(anchor="w")
+            lines = [f"DishonoredCraft {i['version']} is already installed on your PC ({i['profile']}, {i['launcher']})."
+                     for i in installed]
+            lines.append("No need for Dishonored: updating keeps its Dishonored files and only replaces the mod's code.")
+            ttk.Label(box2, text="\n".join(lines), style="Panel.TLabel", wraplength=660, justify="left").pack(anchor="w", pady=(6, 0))
         row = ttk.Frame(self.body)
         row.pack(fill="x", pady=(4, 0))
         ttk.Button(row, text="Check again", command=self.recheck).pack(side="left")
-        if not ok:
+        if not ok and not installed:
             self.text(row, "  Install Dishonored through Steam first, then press Check again.", style="Dim.TLabel", side="left")
-        self.next_btn.state(["!disabled"] if ok else ["disabled"])
+        self.next_btn.state(["!disabled"] if ok or installed else ["disabled"])
 
     def recheck(self):
         self.game = engine.find_dishonored() or self.game
@@ -236,21 +255,79 @@ class Wizard(tk.Tk):
             what = f"The DishonoredCraft mod will be installed into your existing {p['launcher']} profile {p['name']}." if p else ""
         self.what.configure(text=what)
         old = sorted(Path(mods).glob("DishonoredCraft-*.jar")) if mods and Path(mods).exists() else []
-        if old:
-            self.note.configure(text=f"✔ {old[-1].name} is already there: it will be replaced by the new build.")
+        reuse = engine.reusable_jar(mods)
+        if reuse:
+            self.note.configure(text=f"✔ {reuse.name} is already there: only the mod's code is updated, its Dishonored "
+                                     "files are kept (Dishonored isn't needed).")
+            self.next_btn.configure(text="Update")
+        elif old:
+            self.note.configure(text=f"✔ {old[-1].name} is already there: it will be rebuilt from Dishonored "
+                                     "(this update brings new Dishonored files).")
             self.next_btn.configure(text="Update")
         else:
             self.note.configure(text="")
             self.next_btn.configure(text="Install")
 
+    def ask_close_curseforge(self):
+        """CurseForge must be closed while the setup changes its profile: offer to close it and carry on."""
+        dlg = tk.Toplevel(self)
+        dlg.withdraw()
+        dlg.title("DishonoredCraft Setup")
+        dlg.configure(bg=BG)
+        dlg.resizable(False, False)
+        dlg.transient(self)
+        frame = ttk.Frame(dlg, padding=18)
+        frame.pack(fill="both", expand=True)
+        self.text(frame, "CurseForge is open", style="Title.TLabel", wrap=440, pady=(0, 8))
+        self.text(frame, "CurseForge keeps its profiles in memory and would block some of the installer features, like the "
+                         "custom profile picture. Please close CurseForge to continue the installation.", wrap=440, pady=(0, 14))
+        status = self.text(frame, "", style="Dim.TLabel", wrap=440)
+        result = {"ok": False}
+        buttons = ttk.Frame(frame)
+        buttons.pack(anchor="e", pady=(6, 0))
+
+        def finished(ok):
+            if ok:
+                result["ok"] = True
+                dlg.destroy()
+            else:
+                status.configure(text="CurseForge didn't close. Please exit it yourself (right-click its icon by the clock "
+                                      "and choose Exit), then press Install again.")
+                close_btn.state(["!disabled"])
+                cancel_btn.state(["!disabled"])
+
+        def close_and_go():
+            close_btn.state(["disabled"])
+            cancel_btn.state(["disabled"])
+            status.configure(text="Closing CurseForge...")
+            # Ends the process in the background, so the window stays responsive.
+            threading.Thread(target=lambda: self.after(0, finished, engine.close_curseforge()), daemon=True).start()
+
+        close_btn = ttk.Button(buttons, text="Close CurseForge and continue", style="Accent.TButton", command=close_and_go)
+        close_btn.pack(side="left", padx=(0, 8))
+        cancel_btn = ttk.Button(buttons, text="Cancel", command=dlg.destroy)
+        cancel_btn.pack(side="left")
+        # Centred over the setup window.
+        dlg.update_idletasks()
+        x = self.winfo_rootx() + (self.winfo_width() - dlg.winfo_reqwidth()) // 2
+        y = self.winfo_rooty() + (self.winfo_height() - dlg.winfo_reqheight()) // 2
+        dlg.geometry(f"+{max(0, x)}+{max(0, y)}")
+        dlg.deiconify()
+        dlg.grab_set()
+        self.wait_window(dlg)
+        return result["ok"]
+
     def target_ok(self):
         mods, launcher = self.target()
         p = next((p for p in self.profiles if str(p["mods"]) == self.choice.get()), None)
-        if (launcher == "CurseForge" or (p and p["launcher"] == "CurseForge")) and engine.curseforge_running():
-            messagebox.showwarning("DishonoredCraft Setup", "Please close CurseForge first (right-click its icon by the clock "
-                                   "and choose Exit), then press Install again.\n\nCurseForge keeps its profiles open while it "
-                                   "runs and would undo the setup's changes, like the profile picture.")
+        if not getattr(self, "game_ok", True) and engine.reusable_jar(mods) is None:
+            messagebox.showerror("DishonoredCraft Setup", "Dishonored is needed to install DishonoredCraft here: there is no "
+                                 "DishonoredCraft in this profile to update (or this update brings new Dishonored files).\n\n"
+                                 "Install Dishonored through Steam, go back and press Check again.")
             return False
+        if (launcher == "CurseForge" or (p and p["launcher"] == "CurseForge")) and engine.curseforge_running():
+            if not self.ask_close_curseforge():
+                return False
         if launcher:
             return True
         if mods is None or not mods.is_absolute():
@@ -286,6 +363,8 @@ class Wizard(tk.Tk):
         self.back_btn.state(["disabled"])
         self.next_btn.state(["disabled"])
         mods, launcher = self.target()
+        # An update (a DishonoredCraft jar was already there) gets a shorter last page: no key list.
+        self.was_update = bool(mods and Path(mods).exists() and list(Path(mods).glob("DishonoredCraft-*.jar")))
         self.installer = engine.Installer(self.game, mods, launcher,
                                           on_progress=lambda f, s: self.after(0, self.progress, f, s),
                                           on_log=lambda line: self.after(0, self.add_log, line))
@@ -323,26 +402,35 @@ class Wizard(tk.Tk):
         self.installer = None
 
     def page_done(self):
-        ttk.Label(self.body, text="DishonoredCraft is ready", style="Title.TLabel").pack(anchor="w", pady=(0, 12))
+        title = "DishonoredCraft is updated" if getattr(self, "was_update", False) else "DishonoredCraft is ready"
+        ttk.Label(self.body, text=title, style="Title.TLabel").pack(anchor="w", pady=(0, 12))
         self.text(self.body, f"Built: {self.jar}", pady=(0, 10))
         mods, launcher = self.target()
-        if launcher:
+        updated = getattr(self, "was_update", False)
+        if launcher and not updated:
             how = (f"Open {launcher} (restart it if it was already open) and play the DishonoredCraft profile. The first "
                    "start downloads Minecraft and Forge, which takes a minute.")
+        elif launcher:
+            how = f"Open {launcher} (restart it if it was already open) and play the DishonoredCraft profile."
         else:
             how = "Start that profile as usual: DishonoredCraft is in its mods folder."
-        self.text(self.body, how, pady=(0, 10))
-        self.text(self.body, (
-            "Keys: mouse back = block / choke, right click with the blade = use power, mouse forward (hold) = weapon "
-            "wheel, X / Z = next / previous power, Ctrl = lean, R / G = drink health / mana. Bone charms: the Mark of the "
-            "Outsider in your inventory. Change keys under Options > Controls > Key Binds > DishonoredCraft."),
-            style="Dim.TLabel", pady=(0, 14))
+        self.text(self.body, how, pady=(0, 10 if not updated else 14))
+        if not updated:
+            # First install only: the keys to get started.
+            self.text(self.body, (
+                "Keys: mouse back = block / choke, right click with the blade = use power, mouse forward (hold) = weapon "
+                "wheel, X / Z = next / previous power, Ctrl = lean, R / G = drink health / mana. Bone charms: the Mark of "
+                "the Outsider in your inventory. Change keys under Options > Controls > Key Binds > DishonoredCraft."),
+                style="Dim.TLabel", pady=(0, 14))
         row = ttk.Frame(self.body)
         row.pack(anchor="w")
         p = next((p for p in self.profiles if str(p["mods"]) == self.choice.get()), None)
         if (launcher == "CurseForge" or (p and p["launcher"] == "CurseForge")) and engine.curseforge_exe():
-            ttk.Button(row, text="Open CurseForge", style="Accent.TButton",
-                       command=lambda: os.startfile(str(engine.curseforge_exe()))).pack(side="left", padx=(0, 8))
+            def open_curseforge():
+                os.startfile(str(engine.curseforge_exe()))
+                self.destroy()  # the setup is done: CurseForge takes over
+
+            ttk.Button(row, text="Open CurseForge", style="Accent.TButton", command=open_curseforge).pack(side="left", padx=(0, 8))
         ttk.Button(row, text="Open the mods folder", command=lambda: os.startfile(str(Path(self.jar).parent))).pack(side="left")
         self.back_btn.state(["disabled"])
         self.next_btn.configure(text="Finish")

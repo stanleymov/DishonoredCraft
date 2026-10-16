@@ -79,6 +79,19 @@ public final class Awareness {
 		s.level = Math.min(s.level, INVESTIGATE + 0.05f);
 	}
 
+	/**
+	 * Vanilla's own rules for who goes after a player: neutral mobs (zombified piglins, wolves...) only once they are
+	 * angry at them, piglins not while the player wears gold armour, spiders not in bright light. Endermen have
+	 * their own stare rule (see tick).
+	 */
+	private static boolean wouldHunt(MobEntity mob, PlayerEntity player) {
+		if (mob instanceof net.minecraft.entity.mob.EndermanEntity) return true;
+		if (mob instanceof net.minecraft.entity.mob.Angerable angry && !player.getUuid().equals(angry.getAngryAt())) return false;
+		if (mob instanceof net.minecraft.entity.mob.PiglinEntity && net.minecraft.entity.mob.PiglinBrain.wearsGoldArmor(player)) return false;
+		if (mob instanceof net.minecraft.entity.mob.SpiderEntity && mob.getTarget() != player && mob.getBrightnessAtEyes() >= 0.5F) return false;
+		return true;
+	}
+
 	/** No gauge for takedown victims, sleeping mobs or the dying. */
 	private static boolean hidden(MobEntity mob) {
 		return !mob.isAlive() || Takedowns.inTakedown(mob) || SleepDarts.isAsleep(mob);
@@ -136,7 +149,7 @@ public final class Awareness {
 		for (MobEntity mob : player.getServerWorld().getEntitiesByClass(MobEntity.class, box, m -> m instanceof Monster && m.isAlive())) {
 			if (Takedowns.isBoss(mob) && mob.getTarget() == player) continue;
 			// Mobs that never go for players (the Devouring Swarm's rats) have no gauge.
-			if (hidden(mob) || !mob.canTarget(player)) {
+			if (hidden(mob) || !mob.canTarget(player) || !wouldHunt(mob, player)) {
 				states.remove(mob.getUuid());
 				continue;
 			}

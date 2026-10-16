@@ -55,6 +55,11 @@ abstract class HeldItemRendererMixin {
 		}
 		if (player.isUsingSpyglass() || player.isInvisible()) return;
 		boolean main = hand == Hand.MAIN_HAND;
+		// Corvo's marked hand is always the left one: nothing held in the off hand (a torch, a shield) is drawn.
+		if (!main && FpAssets.available()) {
+			ci.cancel();
+			return;
+		}
 		Arm arm = main ? player.getMainArm() : player.getMainArm().getOpposite();
 		HeldItemRendererAccessor self = (HeldItemRendererAccessor) this;
 		HandTuning.maybeReload();

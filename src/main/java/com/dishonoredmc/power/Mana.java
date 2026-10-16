@@ -53,6 +53,17 @@ public final class Mana {
 		regenBack.merge(player.getUuid(), amount, Float::sum);
 	}
 
+	/**
+	 * Mana spent on Blink that flows back by itself, by player. As in Dishonored, waiting after a Blink always gives
+	 * one Blink's worth back, whatever the mana level; several Blinks in a row still give back only one.
+	 */
+	private static final Map<UUID, Float> blinkBack = new HashMap<>();
+
+	/** A Blink was cast: one Blink's worth will regenerate once the regen delay has passed. */
+	public static void blinked(ServerPlayerEntity player) {
+		if (!player.isCreative()) blinkBack.put(player.getUuid(), Power.BLINK.cost);
+	}
+
 	/** Keep mana when the player entity is recreated (death, leaving the End). */
 	public static void copy(net.minecraft.entity.player.PlayerEntity from, net.minecraft.entity.player.PlayerEntity to) {
 		if (from.getPersistentData().contains(KEY)) to.getPersistentData().putFloat(KEY, from.getPersistentData().getFloat(KEY));
@@ -88,12 +99,22 @@ public final class Mana {
 		}
 		float mana = get(player);
 		int since = player.age - lastSpend.getOrDefault(player.getUuid(), -1000);
-		// As in Dishonored, mana only refills by itself up to the cost of one Blink; elixirs fill the rest.
-		float cap = Power.BLINK.cost;
-		if (mana < cap && (since > REGEN_DELAY || since < 0)) {
-			// Spiritual Pool bone charm: a little faster.
-			float rate = REGEN_PER_TICK * (com.dishonoredmc.BoneCharms.has(player, com.dishonoredmc.item.ModItems.CHARM_SPIRITUAL_POOL) ? 1.3f : 1f);
-			store(player, Math.min(cap, mana + rate));
+		boolean regen = since > REGEN_DELAY || since < 0;
+		// Spiritual Pool bone charm: a little faster.
+		float rate = REGEN_PER_TICK * (com.dishonoredmc.BoneCharms.has(player, com.dishonoredmc.item.ModItems.CHARM_SPIRITUAL_POOL) ? 1.3f : 1f);
+		Float blink = blinkBack.get(player.getUuid());
+		if (blink != null) {
+			// The last Blink's mana comes back, at any mana level.
+			if (regen) {
+				float step = Math.min(blink, rate);
+				if (mana < MAX) store(player, Math.min(MAX, mana + step));
+				if (mana + step >= MAX || blink - step <= 0f) blinkBack.remove(player.getUuid());
+				else blinkBack.put(player.getUuid(), blink - step);
+			}
+		} else {
+			// Otherwise mana only refills by itself up to the cost of one Blink; elixirs fill the rest.
+			float cap = Power.BLINK.cost;
+			if (mana < cap && regen) store(player, Math.min(cap, mana + rate));
 		}
 		if (player.age % 5 == 0) sync(player, false);
 	}
@@ -108,6 +129,7 @@ public final class Mana {
 
 	public static void forget(UUID id) {
 		regenBack.remove(id);
+		blinkBack.remove(id);
 		lastSpend.remove(id);
 		lastSent.remove(id);
 	}

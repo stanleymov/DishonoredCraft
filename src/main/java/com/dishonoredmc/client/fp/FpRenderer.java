@@ -291,6 +291,21 @@ public final class FpRenderer {
 				vertex(vc, m, entry, model, pos, nrm, idx[t + 2], light, overlay, alpha);
 			}
 		}
+		// Glowing / Dark Vision outline: Minecraft's outline buffer takes quads, so each triangle goes in as one
+		// (its last corner twice).
+		if (consumers instanceof net.minecraft.client.render.OutlineVertexConsumerProvider) {
+			for (FpModel.Part part : model.parts) {
+				if (part.translucent()) continue;
+				VertexConsumer oc = consumers.getBuffer(net.minecraft.client.render.RenderLayer.getOutline(part.texture()));
+				int[] idx = part.indices();
+				for (int t = 0; t < idx.length; t += 3) {
+					for (int k : new int[] {idx[t], idx[t + 1], idx[t + 2], idx[t + 2]}) {
+						oc.vertex(m, pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]).color(255, 255, 255, 255)
+							.texture(model.uvs[k * 2], model.uvs[k * 2 + 1]).next();
+					}
+				}
+			}
+		}
 	}
 
 	private static void vertex(VertexConsumer vc, Matrix4f m, MatrixStack.Entry entry, FpModel model, float[] pos, float[] nrm, int i, int light, int overlay, int alpha) {

@@ -26,6 +26,12 @@ abstract class PlayerEntityMixin implements BoneCharms.Holder {
 		return dishonored$charmSlots;
 	}
 
+	/** Crouching (toggle crouch too) doesn't throw the player out of a possessed creature: casting again does. */
+	@Inject(method = "shouldDismount", at = @At("HEAD"), cancellable = true, require = 0)
+	private void dishonored$stayPossessing(CallbackInfoReturnable<Boolean> cir) {
+		if (com.dishonoredmc.power.Possession.isPossessing((PlayerEntity) (Object) this)) cir.setReturnValue(false);
+	}
+
 	@Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
 	private void dishonored$saveCharms(NbtCompound nbt, CallbackInfo ci) {
 		nbt.put("DishonoredBoneCharms", BoneCharms.write(dishonored$charms()));

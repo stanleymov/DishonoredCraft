@@ -61,7 +61,8 @@ public class DishonoredClient {
 			e.registerReloadListener(new com.dishonoredmc.client.fp.FpAssets());
 		});
 		modBus.addListener((RegisterGuiOverlaysEvent e) ->
-			e.registerAboveAll("hud", (gui, ctx, partialTick, w, h) -> PowerHud.render(ctx, partialTick)));
+			// Below the F3 debug text, so the debug screen stays readable.
+			e.registerBelow(VanillaGuiOverlay.DEBUG_TEXT.id(), "hud", (gui, ctx, partialTick, w, h) -> PowerHud.render(ctx, partialTick)));
 		modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
 			e.registerEntityRenderer(ModEntities.PLAGUE_RAT, PlagueRatRenderer::new);
 			e.registerEntityRenderer(ModEntities.BOLT, BoltRenderer::new);
@@ -120,6 +121,12 @@ public class DishonoredClient {
 		bus.addListener((TickEvent.ClientTickEvent e) -> {
 			MinecraftClient client = MinecraftClient.getInstance();
 			if (e.phase == TickEvent.Phase.START) {
+				// Inside a possessed creature the attack button does nothing (no swing, no hit, no block breaking).
+				if (com.dishonoredmc.power.Possession.clientHostId >= 0) {
+					var attack = client.options.attackKey;
+					attack.setPressed(false);
+					((com.dishonoredmc.client.mixin.KeyBindingAccessor) attack).dishonored$setTimesPressed(0);
+				}
 				ControlSwap.tick(client);
 				dropAssassination(client);
 				bladeStrike(client);
@@ -184,6 +191,14 @@ public class DishonoredClient {
 				blinkCancelled = true;
 				com.dishonoredmc.client.fp.FpController.onBlinkAim(false);
 				client.player.playSound(ModSounds.POWER_SWITCH, 0.4F, 0.8F);
+			}
+			if (usePower.isPressed() && !blinkCancelled && client.currentScreen == null && !ClientPowerState.aimingBlink
+				&& !ClientPowerState.canAfford(client.player, power)) {
+				// Not enough mana (and no Piero's Remedy to drink): no aim, the hand shows it is out of mana, and the
+				// server says so. Nothing more until the button is released.
+				blinkCancelled = true;
+				com.dishonoredmc.client.fp.FpController.onCast(power);
+				com.dishonoredmc.net.Net.toServer(new CastPowerPayload(power.ordinal()));
 			}
 			if (usePower.isPressed() && !blinkCancelled && client.currentScreen == null) {
 				if (!ClientPowerState.aimingBlink) com.dishonoredmc.client.fp.FpController.onBlinkAim(true);

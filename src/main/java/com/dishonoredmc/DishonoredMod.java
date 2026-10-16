@@ -55,7 +55,7 @@ public class DishonoredMod {
 
 	/** Agility (1.20.1 has no jump-strength / safe-fall attributes for players): extra jump velocity and safe fall height. */
 	private static final double AGILITY_JUMP_BOOST = 0.12;
-	private static final float AGILITY_SAFE_FALL = 2.0F; // vanilla 3 + 2 = 5 blocks without damage
+	private static final float AGILITY_SAFE_FALL = 4.0F; // vanilla 3 + 4 = 7 blocks without damage
 
 	public static Identifier id(String path) {
 		return new Identifier(MOD_ID, path);
@@ -191,8 +191,12 @@ public class DishonoredMod {
 		// A grenade's own thrower takes a light, distance-scaled hit instead of the full blast (twice: damage + crater).
 		bus.addListener((net.minecraftforge.event.level.ExplosionEvent.Detonate e) -> {
 			if (!(e.getExplosion().getEntity() instanceof com.dishonoredmc.entity.GrenadeEntity grenade)) return;
+			// The crater blast only breaks blocks: creatures are hurt by the first blast alone.
+			if (grenade.craterBlast) {
+				e.getAffectedEntities().clear();
+				return;
+			}
 			if (!(grenade.getOwner() instanceof PlayerEntity owner) || !e.getAffectedEntities().remove(owner)) return;
-			if (grenade.craterBlast) return; // the crater blast: no second hit
 			double dist = owner.getPos().distanceTo(grenade.getPos());
 			float dmg = (float) Math.max(0, 5.0 * (1.0 - dist / 4.0));
 			if (dmg > 0) owner.damage(owner.getDamageSources().explosion(grenade, owner), dmg);

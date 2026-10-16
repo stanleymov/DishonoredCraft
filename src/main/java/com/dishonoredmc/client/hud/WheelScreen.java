@@ -138,7 +138,7 @@ public class WheelScreen extends Screen {
 		renderBackground(ctx);
 		super.render(ctx, mouseX, mouseY, delta);
 		int cx = width / 2, cy = height / 2;
-		int radius = Math.round(height * 0.30f);
+		int radius = Math.round(height * 0.345f); // 15% bigger than 1.0, so the slots sit further apart
 		int icon = Math.max(16, Math.round(height * 0.083f));
 		RenderSystem.enableBlend();
 		int bh = (radius + icon) * 2, bw = bh * 6 / 5;
@@ -152,18 +152,26 @@ public class WheelScreen extends Screen {
 		// The icons sit inside the ring's band, closer to the centre than its rim (as in Dishonored); the ring art
 		// keeps its size.
 		int iconRadius = Math.round(radius * 0.85f);
+		// The slot whose icon is nearest the cursor (not just its direction), past a small dead zone in the middle;
+		// the highlighted one stays until another is clearly nearer, so a cursor between two doesn't flicker.
 		double dx = mouseX - cx, dy = mouseY - cy;
-		hovered = -1;
-		if (dx * dx + dy * dy > 10 * 10) {
+		if (dx * dx + dy * dy > Math.pow(iconRadius * 0.25, 2)) {
+			int bestI = -1;
 			double best = Double.MAX_VALUE;
-			double m = Math.atan2(dy, dx);
 			for (int i = 0; i < entries.size(); i++) {
-				double d = Math.abs(Math.atan2(Math.sin(m - angle(i)), Math.cos(m - angle(i))));
+				double d = Math.hypot(mouseX - (cx + Math.cos(angle(i)) * iconRadius), mouseY - (cy + Math.sin(angle(i)) * iconRadius));
 				if (d < best) {
 					best = d;
-					hovered = i;
+					bestI = i;
 				}
 			}
+			if (hovered >= 0 && hovered < entries.size()) {
+				double cur = Math.hypot(mouseX - (cx + Math.cos(angle(hovered)) * iconRadius), mouseY - (cy + Math.sin(angle(hovered)) * iconRadius));
+				if (cur < best * 1.2 + 2) bestI = hovered;
+			}
+			hovered = bestI;
+		} else {
+			hovered = -1;
 		}
 		for (int i = 0; i < entries.size(); i++) {
 			Entry e = entries.get(i);
